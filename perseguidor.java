@@ -1,4 +1,4 @@
-package Robocode01;
+package MegaMachoRobocode;
 
 import robocode.*;
 import java.awt.*;
