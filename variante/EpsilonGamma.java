@@ -4,91 +4,170 @@ import robocode.*;
 import java.awt.*;
 
 /**
- * Perseguidor
- * <p/>
- * Foca em um robô, chega perto, e atira de perto, sufocando-o.
+ * EpsilonGamma - έψιλον - Epsilon V4.2
  * 
- * Problemas: robô em longas batalhas perde por superaquecimento
- * robos como wall e spin, ele perde facilmente
+ * Estratégia:
+ * - Foca em um único robô inimigo
+ * - Mantém proximidade com o alvo
+ * - Utiliza padrão de tiro agressivo a curta distância
+ * - V4 adicionado calculo de futura localização do inimigo
+ * 
+ * Limitações conhecidas:
+ * - Vulnerável ao superaquecimento em batalhas longas (nada muito preocupante)
+ * - Fraco contra robôs que se mantêm nas paredes ou giram constantemente (resolvendo)
+ * - V4: o calculo de futura localização tem problema com a velocidade inicial na formula da previsão da localização. Ideia é simplificar e considerar a velocidade inicial como a mesma sendo localizada. A diferença pode ser diluída com aproximação
+ * 
  */
-public class EpsilonGamma extends AdvancedRobot {
-	int moveDirection=1;//Como ele vai se movimentar
-	/**
-	 * run:  Função principal de movimentação
-	 */
-	public void run() {
-		setAdjustRadarForRobotTurn(true);//Mantém o radar parado, enquanto se movimenta
-		setBodyColor(new Color(0, 0, 0));		// 
-		setGunColor(new Color(0, 75, 67));			// Define as cores do robô
-		setRadarColor(new Color(0, 75, 67));		// 
-		setScanColor(Color.white);					// Cor do scanner
-		setBulletColor(Color.blue);					// Cor da bala
-		setAdjustGunForRobotTurn(true); // Mantém o canhão estável no movimento
-		turnRadarRightRadians(Double.POSITIVE_INFINITY);//Mantém o radar se movimentando para direita
-	}
-
-	/**
-	 * onScannedRobot: O que o robô faz se localizar um inimigo no radar
-	 */
-	double previousEnemyEnergy = 100; // variável global no topo da classe
-
-public void onScannedRobot(ScannedRobotEvent e) {
-    double firePower = Math.min(400 / e.getDistance(), getEnergy() / 5);
-    double absBearing = e.getBearingRadians() + getHeadingRadians();
-    double latVel = e.getVelocity() * Math.sin(e.getHeadingRadians() - absBearing);
-    double gunTurnAmt;
-    setTurnRadarLeftRadians(getRadarTurnRemainingRadians());
+public class EpsilonAlpha extends AdvancedRobot {
+    // Multiplicador de direção para movimento (-1 ou 1)
+    int moveDirection = 1;
     
-    // 🔎 Detecção de disparo inimigo
-    double changeInEnergy = previousEnemyEnergy - e.getEnergy();
-    if (changeInEnergy > 0 && changeInEnergy <= 3) {
-        // Movimento aleatório curto — tentativa de desvio
-        double evasionAngle = (Math.random() - 0.5) * Math.PI / 2; // entre -45° e +45°
-        double moveAmount = 100 + Math.random() * 100; // 100–200 px
-        setTurnRightRadians(evasionAngle);
-        setAhead(moveAmount * (Math.random() > 0.5 ? 1 : -1));
+    // Monitora o nível de energia anterior do inimigo para detectar tiros
+    double previousEnemyEnergy = 100;
+
+    /**
+     * Método principal - Inicializa configurações e comportamento do robô
+     */
+    public void run() {
+        // Configurações de movimento
+        setAdjustRadarForRobotTurn(true);    // Mantém o radar estável durante movimento
+        setAdjustGunForRobotTurn(true);      // Mantém o canhão estável durante movimento
+        
+        // Configurações estéticas
+        setBodyColor(new Color(0, 0, 0));     // Corpo preto
+        setGunColor(new Color(0, 75, 67));    // Canhão verde-água,  ciano, sla
+        setRadarColor(new Color(0, 75, 67));  // Radar verde-água, ciano, sla
+        setScanColor(Color.white);            // Scanner branco
+        setBulletColor(Color.orange);           // Balas laranjas
+        
+        // Movimento inicial do radar
+        turnRadarRightRadians(Double.POSITIVE_INFINITY);
     }
-    previousEnemyEnergy = e.getEnergy();
-    
-    // 🔫 Lógica original de ataque
-    if (Math.random() > .9) setMaxVelocity((12 * Math.random()) + 12);
-    if (e.getDistance() > 150) {
-        gunTurnAmt = robocode.util.Utils.normalRelativeAngle(absBearing - getGunHeadingRadians() + latVel / 22);
-        setTurnGunRightRadians(gunTurnAmt);
-        setTurnRightRadians(robocode.util.Utils.normalRelativeAngle(absBearing - getHeadingRadians() + latVel / getVelocity()));
-        setAhead((e.getDistance() - 140) * moveDirection);
-        setFire(3);
-    } else {
-        gunTurnAmt = robocode.util.Utils.normalRelativeAngle(absBearing - getGunHeadingRadians() + latVel / 15);
-        setTurnGunRightRadians(gunTurnAmt);
-        setTurnLeft(-90 - e.getBearing());
-        setAhead((e.getDistance() - 140) * moveDirection);
-        if (getGunHeat() == 0 && getEnergy() > 1){ 
-    	    setFire(firePower);
-		}
-    }
+
+    /**
+     * Controla o comportamento do robô quando um inimigo é detectado
+     * @param e ScannedRobotEvent contendo informações sobre o robô detectado
+     */
+    public void onScannedRobot(ScannedRobotEvent e) {
+
+		double power = 3;
+
+
+
+        // Cálculo dos ângulos de mira
+        double anguloAbsoluto = e.getBearingRadians() + getHeadingRadians();
+        double latVel = e.getVelocity() * Math.sin(e.getHeadingRadians() - anguloAbsoluto);
+        double gunTurnAmt;
+        setTurnRadarLeftRadians(getRadarTurnRemainingRadians());
+        
+        // Sistema de detecção de tiro inimigo
+        double changeInEnergy = previousEnemyEnergy - e.getEnergy();
+        if (changeInEnergy > 0 && changeInEnergy <= 3) {
+            // Manobra evasiva
+            double evasionAngle = (Math.random() - 0.5) * Math.PI / 2;
+            double moveAmount = 100 + Math.random() * 100;
+            setTurnRightRadians(evasionAngle);
+            setAhead(moveAmount * (Math.random() > 0.5 ? 1 : -1));
+        }
+        previousEnemyEnergy = e.getEnergy();
+        
+        // Velocidade aleatória para evitar previsibilidade
+        if (Math.random() > .6) {
+            setMaxVelocity((12 * Math.random()) + 12);
+        }
+			// formula: St = S0 + v  * t
+			// st posição final, s0 posição inicial, v velocidade, t tempo. Velocidade constante
+
+			// formula: St = S0 + v0*t+(1/2)*a*Math.pow(t,2)
+
+		double meuX = getX();
+		double meuY = getY();
+
+		// posicao atual do robo inimigo (S0)
+		double angle = Math.toRadians(getHeading() + e.getBearing());
+		double Xdeles = getX() + Math.sin(angle) * e.getDistance();
+		double Ydeles = getY() + Math.cos(angle) * e.getDistance();
+		double Xinicial = 0;
+        double Yinicial = 0;
+		double velocidadeInicial = 0;
+		double aceleracao;
+		double tempoInicial = 0;
+		boolean detectado = false;
+
+		// informações iniciais do primeiro scan
+		if (!detectado) {
+        Xinicial = Xdeles;
+        Yinicial = Ydeles;
+        aceleracao = 0;
+        tempoInicial = getTime(); // tempo do primeiro scan
+        detectado = true;
+    	}
 	
-	//evita encurralamento na parede
-	if (getX() < 50 || getX() > getBattleFieldWidth() - 50 || 
-    getY() < 50 || getY() > getBattleFieldHeight() - 50) {
-    moveDirection = -moveDirection;
-}
-}
+		// Calcular aceleração média desde a última detecção
+        double novaVelocidade = e.getVelocity();
+        double deltaV = novaVelocidade - velocidadeInicial;
+        double deltaT = getTime() - tempoInicial;
+        aceleracao = deltaV / deltaT;
 
-	public void onHitWall(HitWallEvent e){
-		moveDirection=-moveDirection;//direção reversa
-	}
+		// calculo velocidade da bala
+		double velocidadeBala = 20-3*power;
+		//calculo prever posição
+		double t = e.getDistance()/velocidadeBala;
+		double posicaoFinal = velocidadeInicial * t + 0.5 * aceleracao * Math.pow(t,2);
+		double futuroX = Xinicial + Math.sin(anguloAbsoluto) * posicaoFinal;
+    	double futuroY = Yinicial + Math.cos(anguloAbsoluto) * posicaoFinal;
+        // Comportamento de combate baseado na distância
+        if (e.getDistance() > 150) {
+    		// Engajamento a longa distância mirando na posição futura
+    		double dx = futuroX - meuX;
+    		double dy = futuroY - meuY;
+    		double anguloFuturo = Math.atan2(dx, dy);
 
-	public void onBulletHit(BulletHitEvent e){
-	double energiaPerdidaInimigo;
-	energiaPerdidaInimigo = robocode.Rules.getBulletDamage(e.getBullet().getPower()); // calcula quanto de energia o inimigo perdeu
-}
+    		gunTurnAmt = robocode.util.Utils.normalRelativeAngle(anguloFuturo - getGunHeadingRadians());
+    		setTurnGunRightRadians(gunTurnAmt);
 
-public void onHitByBullet (HitByBulletEvent e){
-	double energiaGanhaInimigo;
-	energiaGanhaInimigo = robocode.Rules.getBulletHitBonus(e.getBullet().getPower()); // calcula quanto de energia o inimigo ganha acertando tiro
+    		setTurnRightRadians(robocode.util.Utils.normalRelativeAngle(anguloAbsoluto - getHeadingRadians() + latVel / getVelocity()));
+    		setAhead((e.getDistance() - 140) * moveDirection);
+    		setFire(power);
+		}
+ 		else {
+            // Engajamento a curta distância
+            gunTurnAmt = robocode.util.Utils.normalRelativeAngle(anguloFuturo - getGunHeadingRadians());
+            setTurnGunRightRadians(gunTurnAmt);
+            setTurnLeft(-90 - e.getBearing());
+            setAhead((e.getDistance() - 140) * moveDirection);
+            setFire(power);
+        }
+    }
 
-}
+    /**
+     * Trata colisão com paredes invertendo a direção
+     */
+    public void onHitWall(HitWallEvent e) {
+        moveDirection = -moveDirection;
+    }
 
+    /**
+     * Registra dano causado ao inimigo quando um tiro acerta
+     */
+    public void onBulletHit(BulletHitEvent e) {
+        double energiaPerdidaInimigo = robocode.Rules.getBulletDamage(e.getBullet().getPower());
+    }
 
+    /**
+     * Registra ganho de energia do inimigo quando somos atingidos
+     */
+    public void onHitByBullet(HitByBulletEvent e) {
+        double energiaGanhaInimigo = robocode.Rules.getBulletHitBonus(e.getBullet().getPower());
+    }
+
+    /**
+     * Rotina de comemoração de vitória
+     */
+    public void onWin(WinEvent e) {
+        for (int i = 0; i < 50; i++) {
+            turnRight(30);
+            turnLeft(30);
+        }
+    }
 }

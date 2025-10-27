@@ -4,7 +4,7 @@ import robocode.*;
 import java.awt.*;
 
 /**
- * EpsilonAlpha - Robô com estratégia de perseguição
+ * EpsilonAlpha - Versáo 4 - considerar Epsilon Gamma
  * 
  * Estratégia:
  * - Foca em um único robô inimigo
@@ -39,6 +39,11 @@ public class EpsilonAlpha extends AdvancedRobot {
         
         // Movimento inicial do radar
         turnRadarRightRadians(Double.POSITIVE_INFINITY);
+    }
+
+    // vou precisar disso aqui
+    public double SeCorrerOBichoPega() {
+
     }
 
     /**
