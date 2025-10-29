@@ -373,20 +373,14 @@ public class RoboMegaMachoPotente extends AdvancedRobot {
     // MÉTODOS DE COMBATE
     // =======================
     private void definirCorCombate() {
-        setColors(new Color(128, 0, 128),
-                new Color(128, 0, 128),
-                new Color(128, 0, 128),
-                new Color(128, 0, 128),
-                new Color(128, 0, 128));
-    }
+    	Color roxo = new Color(0, 75, 67);
+    	setColors(roxo, roxo, roxo, roxo, roxo);
+	}
 
-    private void definirCorPadrao() {
-        setColors(new Color(128, 0, 128),
-                new Color(128, 0, 128),
-                new Color(128, 0, 128),
-                new Color(128, 0, 128),
-                new Color(128, 0, 128));
-    }
+	private void definirCorPadrao() {
+    	Color roxo = new Color(0, 75, 67);
+    	setColors(roxo, roxo, roxo, roxo, roxo);
+	}
 
     /**
      * Mira preditiva com base na posição, direção e velocidade do inimigo.
