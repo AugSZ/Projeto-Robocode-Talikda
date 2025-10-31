@@ -1,7 +1,9 @@
-package MegaMachoRobocode;
+package inicial;
 
 import robocode.*;
 import java.awt.*;
+import robocode.Droid;
+import robocode.TeamRobot;
 
 /**
  * Perseguidor
@@ -11,7 +13,7 @@ import java.awt.*;
  * Problemas: robô em longas batalhas perde por superaquecimento
  * robos como wall e spin, ele perde facilmente
  */
-public class perseguidor extends AdvancedRobot {
+public class perseguidor extends TeamRobot implements Droid {
 	int moveDirection=1;//Como ele vai se movimentar
 	/**
 	 * run:  Função principal de movimentação
