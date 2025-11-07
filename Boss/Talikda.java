@@ -1,4 +1,4 @@
-package Boss;
+package Robo;
 
 import java.awt.Color;
 import java.awt.geom.Point2D;
@@ -9,7 +9,7 @@ import robocode.*;
 import robocode.util.Utils;
 
 /** 
- * Herobrine
+ * Talikda
  *
  * Robô avançado do Robocode com movimentação adaptativa, mira preditiva e
  * aprendizado estatístico por ondas ("Wave Surfing").
