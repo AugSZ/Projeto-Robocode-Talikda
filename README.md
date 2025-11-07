@@ -1,5 +1,5 @@
 # Robocode01
-Implementação do robô Herobrine para o Robocode
+Implementação do robô Talikda para o Robocode
 
 O código desenvolve um robô inteligente capaz de detectar inimigos, mover-se de forma estratégica e ajustar sua mira dinamicamente com base na posição e no comportamento do adversário. O projeto aplica conceitos de lógica, controle de fluxo, e orientação a objetos para criar um sistema autônomo de combate em ambiente simulado.
 
