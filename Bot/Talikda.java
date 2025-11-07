@@ -1,4 +1,4 @@
-package Robo;
+package Bot;
 
 import java.awt.Color;
 import java.awt.geom.Point2D;
