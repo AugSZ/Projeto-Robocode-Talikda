@@ -97,10 +97,21 @@ public class RoboMegaMachoPotente extends AdvancedRobot {
                 LARGURA_CAMPO - MARGEM_PAREDE * 2,
                 ALTURA_CAMPO - MARGEM_PAREDE * 2);
 
-        private double direcao = 0.4;
+        public double direcao = 0.4;
+
+        private int tempoProxReversao; // Pode permanecer private se for usado apenas internamente
 
         Movimento1v1(AdvancedRobot r) {
             this.robo = r;
+        
+            this.areaDisparo = new Rectangle2D.Double(
+                MARGEM_PAREDE, MARGEM_PAREDE,
+                r.getBattleFieldWidth() - MARGEM_PAREDE * 2,
+                r.getBattleFieldHeight() - MARGEM_PAREDES * 2);
+            
+        // Inicializa o tempo de reversão aleatoriamente (melhor aqui do que na declaração)
+            this.tempoProxReversao = (int) (Math.random() * 50) + 50;
+        }
         }
 
         /**
@@ -126,13 +137,26 @@ public class RoboMegaMachoPotente extends AdvancedRobot {
                 tempoTentativa++;
             }
 
-            if ((Math.random() < (Rules.getBulletSpeed(POTENCIA_TIRO) / AJUSTE_REVERSA) / inimigo.distancia)
-                    || tempoTentativa > (inimigo.distancia / Rules.getBulletSpeed(POTENCIA_TIRO) / AJUSTE_QUIQUE_PAREDE))
+            tempoProxReversao--;
+
+            boolean deveReverter = false;
+
+            if (tempoProxReversao <= 0) {
                 direcao = -direcao;
+                // Define um novo tempo aleatório para a próxima reversão (de 50 a 150 tiques)
+                 tempoProxReversao = (int) (Math.random() * 100) + 50;
+            }
+            // 2. Reversão por Colisão Imóvel (Se demorar muito para achar o ponto)
+
+            // Usa uma heurística de tempo de tiro para decidir se está "preso"
+
+            if (tempoTentativa > (inimigo.distancia / Rules.getBulletSpeed(POTENCIA_TIRO) * 0.5))
+            direcao = -direcao;
 
             double angulo = Utilitario.anguloAbsoluto(posicaoRobo, destinoRobo) - robo.getHeadingRadians();
             robo.setAhead(Math.cos(angulo) * 100);
             robo.setTurnRightRadians(Math.tan(angulo));
+            } // Fim do método
         }
     }
 
